@@ -90,8 +90,8 @@ pre_install()
 
 base_install()
 {
-    dialog --infobox "Installing base system..." 0 0
-    pacstrap /mnt base base-devel intel-ucode dialog &>/dev/null
+    clear
+    pacstrap /mnt base base-devel intel-ucode dialog
     genfstab -t PARTUUID -p /mnt > /mnt/etc/fstab
 }
 
