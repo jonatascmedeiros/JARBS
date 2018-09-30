@@ -74,8 +74,8 @@ pre_install()
 
     dialog --infobox "Creating filesystems..." 0 0
     mkfs.vfat -F32 -n ESP /dev/disk/by-partlabel/ESP &>/dev/null
-    mkfs.ext4 -q -m 0 -T big -L arch /dev/disk/by-partlabel/arch
-    mkfs.ext4 -q -m 0 -T big -L home /dev/disk/by-partlabel/home
+    mkfs.ext4 -F -m 0 -T big -L arch /dev/disk/by-partlabel/arch &>/dev/null
+    mkfs.ext4 -F -m 0 -T big -L home /dev/disk/by-partlabel/home &>/dev/null
 
     dialog --infobox "Mounting partitions..." 0 0
     mount PARTLABEL=arch /mnt
