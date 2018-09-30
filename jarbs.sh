@@ -12,7 +12,7 @@
 
 fatal_error()
 {
-    dialog --msgbox "$1\nThe installation process cannot continue." --ok-label "Exit" 0 0
+    dialog --msgbox "$1\n\nThe installation process cannot continue." --ok-label "Exit" 0 0
     clear
     exit 1
 }
@@ -171,7 +171,7 @@ final_configs()
 
 final_message()
 {
-    dialog --msgbox "The installation process is finished.\nReboot the computer." --ok-label "Reboot" 0 0
+    dialog --msgbox "The installation process is finished.\n\nReboot the computer." --ok-label "Reboot" 0 0
 }
 
 root_config

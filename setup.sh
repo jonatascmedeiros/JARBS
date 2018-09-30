@@ -11,7 +11,7 @@
 
 fatal_error()
 {
-    dialog --msgbox "$1\nThe installation process cannot continue." --ok-label "Exit" 0 0
+    dialog --msgbox "$1\n\nThe installation process cannot continue." --ok-label "Exit" 0 0
     clear
     exit 1
 }
@@ -28,29 +28,29 @@ check_requirements()
 
 greetings()
 {
-    dialog --msgbox "JARBS - Jonatas' Auto-Rice Bootstrapping Script.\nThis script will automatically install a full arch linux system with i3-gaps as a window manager.\nThe system comes pre-configured with a focus on a terminal based workflow." 0 0
+    dialog --msgbox "JARBS - Jonatas' Auto-Rice Bootstrapping Script.\n\nThis script will automatically install a full arch linux system with i3-gaps as a window manager.\n\nThe system comes pre-configured with a focus on a terminal based workflow." 0 0
 }
 
 ask_user()
 {
     dialog --no-cancel --inputbox "Enter the name for the computer:" 0 0 2>${host_name}
 
-    root_pass1=$(dialog --no-cancel --passwordbox "Enter the password for root:" 0 0)
-    root_pass2=$(dialog --no-cancel --passwordbox "Retype the password for root:" 0 0)
+    root_pass1=$(dialog --no-cancel --passwordbox "Enter the password for root:" 0 0 3>&1 1>&2 2>&3 3>&1)
+    root_pass2=$(dialog --no-cancel --passwordbox "Retype the password for root:" 0 0 3>&1 1>&2 2>&3 3>&1)
     while ! [[ -n ${root_pass1} && ${root_pass1} == ${root_pass2} ]]; do
-        root_pass1=$(dialog --no-cancel --passwordbox "Passwords do not match or are empty.\nEnter the password for root:" 0 0)
-        root_pass2=$(dialog --no-cancel --passwordbox "Retype the password for root:" 0 0)
+        root_pass1=$(dialog --no-cancel --passwordbox "Passwords do not match or are empty.\nEnter the password for root:" 0 0 3>&1 1>&2 2>&3 3>&1)
+        root_pass2=$(dialog --no-cancel --passwordbox "Retype the password for root:" 0 0 3>&1 1>&2 2>&3 3>&1)
     done
     echo "${root_pass1}" > ${root_pass}
     unset root_pass1
     unset root_pass2
 
-    user_pass1=$(dialog --no-cancel --passwordbox "Enter a password for ${user_name}:" 0 0)
-    user_pass2=$(dialog --no-cancel --passwordbox "Retype the password for ${user_name}:" 0 0)
+    user_pass1=$(dialog --no-cancel --passwordbox "Enter a password for ${user_name}:" 0 0 3>&1 1>&2 2>&3 3>&1)
+    user_pass2=$(dialog --no-cancel --passwordbox "Retype the password for ${user_name}:" 0 0 3>&1 1>&2 2>&3 3>&1)
     while ! [[ ${user_pass1} == ${user_pass2} ]]; do
         unset user_pass2
-        user_pass1=$(dialog --no-cancel --passwordbox "Passwords do not match.\nEnter a password for ${user_name}:" 0 0)
-        user_pass2=$(dialog --no-cancel --passwordbox "Retype the password for ${user_name}:" 0 0)
+        user_pass1=$(dialog --no-cancel --passwordbox "Passwords do not match.\nEnter a password for ${user_name}:" 0 0 3>&1 1>&2 2>&3 3>&1)
+        user_pass2=$(dialog --no-cancel --passwordbox "Retype the password for ${user_name}:" 0 0 3>&1 1>&2 2>&3 3>&1)
     done
     echo "${user_pass1}" > ${user_pass}
     unset user_pass1
@@ -59,7 +59,7 @@ ask_user()
 
 confirm_install()
 {
-    dialog --yesno "The installation is ready to start.\nFrom this point onwards the script will install everything automatically, without asking you anything or giving any warnings. Be aware that the script will DELETE your entire disk. The disk that will be erased is the one in /dev/sda. If you have multiple drives and that one is not the right one, DO NOT continue the installation. Do you want to start the installation process?" 0 0 || fatal_error "Process aborted."
+    dialog --yesno "The installation is ready to start.\n\nFrom this point onwards the script will install everything automatically, without asking you anything or giving any warnings.\n\nBe aware that the script will DELETE your entire disk. The disk that will be erased is the one in /dev/sda. If you have multiple drives and that one is not the right one, DO NOT continue the installation.\n\nDo you want to start the installation process?" 0 0 || fatal_error "Process aborted."
 }
 
 pre_install()
