@@ -98,8 +98,8 @@ base_install()
 go_chroot()
 {
     mv ${host_name} /mnt/etc/hostname
-    mv ${root_pass} /mnt/${root_pass}
-    mv ${user_pass} /mnt/${user_pass}
+    mv ${root_pass} /mnt/tmp/.rpass
+    mv ${user_pass} /mnt/tmp/.upass
     echo "${user_name}" > /mnt/tmp/uname
 
     dialog --infobox "Getting jarbs script..." 0 0

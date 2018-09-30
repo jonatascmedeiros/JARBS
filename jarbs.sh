@@ -30,7 +30,7 @@ root_config()
     # root password
     root_pass=$(cat /tmp/.rpass)
     echo "root:${root_pass}" | chpasswd
-    rm .rpass
+    rm /tmp/.rpass
 
     # time
     ln -sf /usr/share/zoneinfo/${time_zone} /etc/localtime &>/dev/null
@@ -73,7 +73,7 @@ user_config()
     useradd -m -g wheel -s /bin/bash \"${user_name}\" &>/dev/null
     user_pass=$(cat /tmp/.upass)
     echo "${user_name}:${user_pass}" | chpasswd
-    rm .upass uname
+    rm /tmp/.upass /tmp/uname
     new_perms "%wheel ALL=(ALL) NOPASSWD: ALL"
 }
 
