@@ -72,10 +72,12 @@ pre_install()
     parted /dev/sda mkpart arch ext4 129MiB 32897MiB name 2 arch &>/dev/null
     parted /dev/sda mkpart home ext4 32897MiB 100% name 3 home &>/dev/null
 
+    dialog --infobox "Creating filesystems..." 0 0
     mkfs.vfat -F32 -n ESP /dev/disk/by-partlabel/ESP &>/dev/null
     mkfs.ext4 -q -m 0 -T big -L arch /dev/disk/by-partlabel/arch
     mkfs.ext4 -q -m 0 -T big -L home /dev/disk/by-partlabel/home
 
+    dialog --infobox "Mounting partitions..." 0 0
     mount PARTLABEL=arch /mnt
     mkdir -p /mnt/{boot,home}
     mount PARTLABEL=ESP /mnt/boot
@@ -100,6 +102,7 @@ go_chroot()
     mv ${user_pass} /mnt/${user_pass}
     echo "${user_name}" > /mnt/uname
 
+    dialog --infobox "Getting jarbs script..." 0 0
     curl -s https://raw.githubusercontent.com/jonatascmedeiros/JARBS/master/jarbs.sh > /mnt/jarbs.sh && arch-chroot /mnt bash jarbs.sh && rm /mnt/jarbs.sh
 }
 
