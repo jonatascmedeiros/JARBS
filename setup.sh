@@ -67,10 +67,10 @@ pre_install()
     timedatectl set-ntp true
 
     dialog --infobox "Partitioning the disk..." 0 0
-    parted /dev/sda mklabel gpt &>/dev/null
-    parted /dev/sda mkpart esp fat32 0% 129MiB set 1 boot on name 1 ESP &>/dev/null
-    parted /dev/sda mkpart arch ext4 129MiB 32897MiB name 2 arch &>/dev/null
-    parted /dev/sda mkpart home ext4 32897MiB 100% name 3 home &>/dev/null
+    parted -s /dev/sda mklabel gpt &>/dev/null
+    parted -s /dev/sda mkpart esp fat32 0% 129MiB set 1 boot on name 1 ESP &>/dev/null
+    parted -s /dev/sda mkpart arch ext4 129MiB 32897MiB name 2 arch &>/dev/null
+    parted -s /dev/sda mkpart home ext4 32897MiB 100% name 3 home &>/dev/null
 
     dialog --infobox "Creating filesystems..." 0 0
     mkfs.vfat -F32 -n ESP /dev/disk/by-partlabel/ESP &>/dev/null
