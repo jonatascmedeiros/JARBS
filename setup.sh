@@ -100,7 +100,7 @@ go_chroot()
     mv ${host_name} /mnt/etc/hostname
     mv ${root_pass} /mnt/${root_pass}
     mv ${user_pass} /mnt/${user_pass}
-    echo "${user_name}" > /mnt/uname
+    echo "${user_name}" > /mnt/tmp/uname
 
     dialog --infobox "Getting jarbs script..." 0 0
     curl -s https://raw.githubusercontent.com/jonatascmedeiros/JARBS/master/jarbs.sh > /mnt/jarbs.sh && arch-chroot /mnt bash jarbs.sh && rm /mnt/jarbs.sh

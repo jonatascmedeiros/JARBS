@@ -28,7 +28,7 @@ root_config()
     dialog --infobox "Configuring system..." 0 0
 
     # root password
-    root_pass=$(cat .rpass)
+    root_pass=$(cat /tmp/.rpass)
     echo "root:${root_pass}" | chpasswd
     rm .rpass
 
@@ -69,9 +69,9 @@ swap_file()
 user_config()
 {
     dialog --infobox "Configuring new user..." 0 0
-    user_name=$(cat uname)
+    user_name=$(cat /tmp/uname)
     useradd -m -g wheel -s /bin/bash \"${user_name}\" &>/dev/null
-    user_pass=$(cat .upass)
+    user_pass=$(cat /tmp/.upass)
     echo "${user_name}:${user_pass}" | chpasswd
     rm .upass uname
     new_perms "%wheel ALL=(ALL) NOPASSWD: ALL"
