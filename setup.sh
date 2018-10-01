@@ -6,7 +6,7 @@
 
 title_message()
 {
-    echo "*********************************************************"
+    echo -e "\n*********************************************************"
     echo -e "$1"
     echo "*********************************************************"
 }
@@ -47,7 +47,7 @@ check_requirements()
 
 greetings()
 {
-    title_message "JARBS - Jonatas' Auto-Rice Bootstrapping Script.\n\nThis script will automatically install a full arch linux system with i3-gaps as a window manager.\n\nThe system comes pre-configured with a focus on a terminal based workflow."
+    title_message "JARBS - Jonatas' Auto-Rice Bootstrapping Script.\n\nThis script will automatically install a full arch linux\nsystem with i3-gaps as a window manager.\n\nThe system comes pre-configured with a focus on a\nterminal based workflow."
 }
 
 ask_user()
@@ -55,7 +55,6 @@ ask_user()
     title_message "Info Gathering"
 
     read -p "Enter a name for the computer: " host_name
-    echo "${host_name}" > ${host_name_file}
 
     read -sp "Enter root password: " root_pass1
     read -sp "Retype root password: " root_pass2
