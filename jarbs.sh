@@ -12,9 +12,9 @@
 
 title_message()
 {
-    echo "*********************************************************"
+    echo -e "\n*********************************************************"
     echo -e "$1"
-    echo "*********************************************************"
+    echo "---------------------------------------------------------"
 }
 
 fatal_error()
@@ -46,32 +46,39 @@ root_config()
 {
     title_message "Starting JARBS"
 
-    echo "root password setting."
+    title_message "root Password Setting"
     root_pass=$(cat .rpass)
     echo "root:${root_pass}" | chpasswd
     rm .rpass
+    sleep 1
 
-    echo "Time zone setting."
+    title_message "Time Zone Setting"
     ln -sf /usr/share/zoneinfo/${time_zone} /etc/localtime
     hwclock -wu
+    sleep 2
 
-    echo "Locale setting."
+    title_message "Locale Setting"
     sed -i 's/^#en_US/en_US/' /etc/locale.gen
     locale-gen
     echo "LANG=en_US.UTF-8" > /etc/locale.conf
+    sleep 2
 
-    echo "Network Manager installation."
+    title_message "Network Manager Installation"
     pacman --noconfirm --needed -S networkmanager
+    title_message "Enabling Network Manager"
     systemctl enable NetworkManager
+    sleep 2
 
-    echo "Bootloader installation"
+    title_message "Bootloader Installation"
     bootctl install
     echo -e 'default\tarch\ntimeout\t3\neditor\t0' > /boot/loader/loader.conf
     echo -e 'title\tArch Linux\nlinux\t/vmlinuz-linux\ninitrd\t/intel-ucode.img\ninitrd\t/initramfs-linux.img\noptions\troot=PARTLABEL=arch rw' > /boot/loader/entries/arch.conf
+    sleep 2
 
-    echo "SSD settings."
+    title_message "SSD Settings"
     systemctl enable fstrim.timer
     echo -e "ACTION==\"add|change\", KERNEL==\"sd[a-z]\", ATTR{queue/rotational}==\"0\", ATTR{queue/scheduler}=\"deadline\"" > /etc/udev/rules.d/60-schedulers.rules
+    sleep 2
 }
 
 swap_file()
@@ -82,6 +89,7 @@ swap_file()
     mkswap /swapfile
     swapon /swapfile
     echo -e "# Swap File\n/swapfile\tnone\tswap\tdefaults\t0 0\n" >> /etc/fstab
+    sleep 2
 }
 
 user_config()
@@ -93,14 +101,22 @@ user_config()
     echo "${user_name}:${user_pass}" | chpasswd
     rm .upass .uname
     new_perms "%wheel ALL=(ALL) NOPASSWD: ALL"
+    sleep 2
 }
 
 refresh_keys()
 {
-    title_message "Refreshing Pacman Keys"
+    title_message "Initializing Pacman Keys"
+    sleep 1
     pacman-key --init
+    title_message "Populating Pacman Keys"
+    sleep 2
     pacman-key --populate archlinux
+    title_message "Refreshing Pacman Keys"
+    sleep 2
     pacman-key --refresh-keys
+    title_message "End of Refreshing Pacman Keys"
+    sleep 2
 }
 
 install_aur_helper()
@@ -176,7 +192,7 @@ service_init()
 
 system_beep_off()
 {
-    echo "Getting rid of error beep sound."
+    title_message "Getting rid of error beep sound"
 	rmmod pcspkr
 	echo "blacklist pcspkr" > /etc/modprobe.d/nobeep.conf ;
 }
@@ -184,6 +200,7 @@ system_beep_off()
 final_configs()
 {
     title_message "Finishing Things Off"
+    sleep 2
 
     new_perms "%wheel ALL=(ALL) ALL\\n%wheel ALL=(ALL) NOPASSWD: /usr/bin/shutdown,/usr/bin/reboot,/usr/bin/systemctl suspend,/usr/bin/wifi-menu,/usr/bin/mount,/usr/bin/umount,/usr/bin/pacman -Syu,/usr/bin/pacman -Syyu,/usr/bin/packer -Syu,/usr/bin/packer -Syyu,/usr/bin/systemctl restart NetworkManager,/usr/bin/rc-service NetworkManager restart,/usr/bin/pacman -Syyu --noconfirm,/usr/bin/loadkeys,/usr/bin/yay"
 
@@ -194,16 +211,17 @@ final_configs()
 final_message()
 {
     title_message "The installation process is finished."
+    sleep 1
 }
 
 root_config
 swap_file
 user_config
 refresh_keys
-install_aur_helper
-install_progs
-get_git_repo "${dotfiles_repo}" "/home/${user_name}"
-get_git_repo "https://github.com/LukeSmithxyz/mozillarbs.git" "/home/${user_name}/.mozilla/firefox"
-service_init NetworkManager cronie
+#install_aur_helper
+#install_progs
+#get_git_repo "${dotfiles_repo}" "/home/${user_name}"
+#get_git_repo "https://github.com/LukeSmithxyz/mozillarbs.git" "/home/${user_name}/.mozilla/firefox"
+#service_init NetworkManager cronie
 final_configs
 final_message
