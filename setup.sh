@@ -4,106 +4,144 @@
 # by Jonatas Medeiros <jonatascmedeiros@gmail.com>
 # License: GNU GPLv3
 
-[ -z ${user_name+x} ] && user_name="jonatas"
-[ -z ${host_name+x} ] && host_name="/tmp/host_name"
-[ -z ${root_pass+x} ] && root_pass="/tmp/.rpass"
-[ -z ${user_pass+x} ] && user_pass="/tmp/.upass"
+title_message()
+{
+    echo "*********************************************************"
+    echo "$1"
+    echo "*********************************************************"
+}
 
 fatal_error()
 {
-    dialog --msgbox "$1\n\nThe installation process cannot continue." --ok-label "Exit" 0 0
-    clear
+    title_message "$1\nThe installation process cannot continue."
     exit 1
+}
+
+confirm()
+{
+    read -r -p "${1:-Are you sure? [y/N]} " response
+    case "$response" in
+        [yY][eE][sS]|[yY]) 
+            true
+            ;;
+        *)
+            false
+            ;;
+    esac
 }
 
 check_requirements()
 {
+    title_message "Requirements Check"
+    echo -n "Checking if root..."
     if [[ `whoami` != "root" ]]; then
         fatal_error "You need to run this script as root."
     fi
+    echo "OK"
+    echo -n "Checking internet connection..."
     if [[ ! $(ping -c 1 google.com) ]]; then
         fatal_error "You need an internet connection."
     fi
+    echo "OK"
 }
 
 greetings()
 {
-    dialog --msgbox "JARBS - Jonatas' Auto-Rice Bootstrapping Script.\n\nThis script will automatically install a full arch linux system with i3-gaps as a window manager.\n\nThe system comes pre-configured with a focus on a terminal based workflow." 0 0
+    title_message "JARBS - Jonatas' Auto-Rice Bootstrapping Script.\n\nThis script will automatically install a full arch linux system with i3-gaps as a window manager.\n\nThe system comes pre-configured with a focus on a terminal based workflow."
 }
 
 ask_user()
 {
-    dialog --no-cancel --inputbox "Enter the name for the computer:" 0 0 2>${host_name}
+    title_message "Info Gathering"
 
-    root_pass1=$(dialog --no-cancel --passwordbox "Enter the password for root:" 0 0 3>&1 1>&2 2>&3 3>&1)
-    root_pass2=$(dialog --no-cancel --passwordbox "Retype the password for root:" 0 0 3>&1 1>&2 2>&3 3>&1)
+    read -p "Enter a name for the computer: " host_name
+    echo "${host_name}" > ${host_name_file}
+
+    read -sp "Enter root password: " root_pass1
+    read -sp "Retype root password: " root_pass2
     while ! [[ -n ${root_pass1} && ${root_pass1} == ${root_pass2} ]]; do
-        root_pass1=$(dialog --no-cancel --passwordbox "Passwords do not match or are empty.\nEnter the password for root:" 0 0 3>&1 1>&2 2>&3 3>&1)
-        root_pass2=$(dialog --no-cancel --passwordbox "Retype the password for root:" 0 0 3>&1 1>&2 2>&3 3>&1)
+        echo "Passwords do not match. Try again."
+        read -sp "Enter root password: " root_pass1
+        read -sp "Retype root password: " root_pass2
     done
-    echo "${root_pass1}" > ${root_pass}
-    unset root_pass1
     unset root_pass2
 
-    user_pass1=$(dialog --no-cancel --passwordbox "Enter a password for ${user_name}:" 0 0 3>&1 1>&2 2>&3 3>&1)
-    user_pass2=$(dialog --no-cancel --passwordbox "Retype the password for ${user_name}:" 0 0 3>&1 1>&2 2>&3 3>&1)
-    while ! [[ ${user_pass1} == ${user_pass2} ]]; do
-        unset user_pass2
-        user_pass1=$(dialog --no-cancel --passwordbox "Passwords do not match.\nEnter a password for ${user_name}:" 0 0 3>&1 1>&2 2>&3 3>&1)
-        user_pass2=$(dialog --no-cancel --passwordbox "Retype the password for ${user_name}:" 0 0 3>&1 1>&2 2>&3 3>&1)
+    read -p "Enter name of new user: " user_name
+    read -sp "Enter password for ${user_name}: " user_pass1
+    read -sp "Retype password for ${user_name}: " user_pass2
+    while ! [[ -n ${user_pass1} && ${user_pass1} == ${user_pass2} ]]; do
+        echo "Passwords do not match. Try again."
+        read -sp "Enter password for ${user_name}: " user_pass1
+        read -sp "Retype password for ${user_name}: " user_pass2
     done
-    echo "${user_pass1}" > ${user_pass}
-    unset user_pass1
     unset user_pass2
 }
 
 confirm_install()
 {
-    dialog --yesno "The installation is ready to start.\n\nFrom this point onwards the script will install everything automatically, without asking you anything or giving any warnings.\n\nBe aware that the script will DELETE your entire disk. The disk that will be erased is the one in /dev/sda. If you have multiple drives and that one is not the right one, DO NOT continue the installation.\n\nDo you want to start the installation process?" 0 0 || fatal_error "Process aborted."
+    title_message "The installation is ready to start.\n\nFrom this point onwards the script will install everything automatically, without asking you anything or giving any warnings.\n\nBe aware that the script will DELETE your entire disk. The disk that will be erased is the one in /dev/sda. If you have multiple drives and that one is not the right one, DO NOT continue the installation." 0 0 || fatal_error "Process aborted."
+
+    confirm "Do you want to start the installation process? [y/N] " || fatal_error "Process aborted."
 }
 
 pre_install()
 {
+    echo -n "Clock synchronization."
     timedatectl set-ntp true
 
-    dialog --infobox "Partitioning the disk..." 0 0
-    parted -s /dev/sda mklabel gpt &>/dev/null
-    parted -s /dev/sda mkpart esp fat32 0% 129MiB set 1 boot on name 1 ESP &>/dev/null
-    parted -s /dev/sda mkpart arch ext4 129MiB 32897MiB name 2 arch &>/dev/null
-    parted -s /dev/sda mkpart home ext4 32897MiB 100% name 3 home &>/dev/null
+    title_message "Preparing the Disk"
 
-    dialog --infobox "Creating filesystems..." 0 0
-    mkfs.vfat -F32 -n ESP /dev/disk/by-partlabel/ESP &>/dev/null
-    mkfs.ext4 -F -m 0 -T big -L arch /dev/disk/by-partlabel/arch &>/dev/null
-    mkfs.ext4 -F -m 0 -T big -L home /dev/disk/by-partlabel/home &>/dev/null
+    echo "Disk partitioning."
+    parted -s /dev/sda mklabel gpt
+    parted -s /dev/sda mkpart esp fat32 0% 129MiB set 1 boot on name 1 ESP
+    parted -s /dev/sda mkpart arch ext4 129MiB 32897MiB name 2 arch
+    parted -s /dev/sda mkpart home ext4 32897MiB 100% name 3 home
 
-    dialog --infobox "Mounting partitions..." 0 0
+    echo "Filesystems creation."
+    mkfs.vfat -F32 -n ESP /dev/disk/by-partlabel/ESP
+    mkfs.ext4 -F -m 0 -T big -L arch /dev/disk/by-partlabel/arch
+    mkfs.ext4 -F -m 0 -T big -L home /dev/disk/by-partlabel/home
+
+    echo "Partition mounting."
     mount PARTLABEL=arch /mnt
     mkdir -p /mnt/{boot,home}
     mount PARTLABEL=ESP /mnt/boot
     mount PARTLABEL=home /mnt/home
 
-    dialog --infobox "Updating the mirrorlist..." 0 0
+    title_message "Mirrolist Update"
     cp /etc/pacman.d/mirrorlist /etc/pacman.d/mirrorlist.backup
-    curl -s "https://www.archlinux.org/mirrorlist/?country=BR&use_mirror_status=on" | sed -e 's/^#Server/Server/' -e '/^#/d' > /etc/pacman.d/mirrorlist
+    curl "https://www.archlinux.org/mirrorlist/?country=BR&use_mirror_status=on" | sed -e 's/^#Server/Server/' -e '/^#/d' > /etc/pacman.d/mirrorlist
 }
 
 base_install()
 {
-    clear
+    title_message "Base Installation"
     pacstrap /mnt base base-devel intel-ucode dialog
+
+    echo "fstab generation."
     genfstab -t PARTUUID -p /mnt > /mnt/etc/fstab
 }
 
 go_chroot()
 {
-    mv ${host_name} /mnt/etc/hostname
-    mv ${root_pass} /mnt/tmp/.rpass
-    mv ${user_pass} /mnt/tmp/.upass
-    echo "${user_name}" > /mnt/tmp/uname
+    echo "Temp files migration."
+    echo "${host_name}" > /mnt/etc/hostname
+    echo "${user_name}" > /mnt/tmp/.uname
+    echo "${root_pass1}" > /mnt/tmp/.rpass
+    echo "${user_pass1}" > /mnt/tmp/.upass
+    unset root_pass1
+    unset user_pass1
 
-    dialog --infobox "Getting jarbs script..." 0 0
-    curl -s https://raw.githubusercontent.com/jonatascmedeiros/JARBS/master/jarbs.sh > /mnt/jarbs.sh && arch-chroot /mnt bash jarbs.sh && rm /mnt/jarbs.sh
+    title_message "Downloading JARBS"
+    curl https://raw.githubusercontent.com/jonatascmedeiros/JARBS/master/jarbs.sh > /mnt/jarbs.sh && arch-chroot /mnt bash jarbs.sh && rm /mnt/jarbs.sh
+}
+
+reboot_computer()
+{
+    echo "Partitions unmounting."
+    umount -R /mnt
+    title_message "Rebooting"
+    reboot
 }
 
 check_requirements
@@ -116,6 +154,4 @@ pre_install
 base_install
 go_chroot
 
-dialog --infobox "Rebooting..." 0 0
-umount -R /mnt
-reboot
+confirm "Reboot the computer?" && reboot_computer

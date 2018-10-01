@@ -10,11 +10,30 @@
 [ -z ${progs_file+x} ] && progs_file="https://raw.githubusercontent.com/jonatascmedeiros/JARBS/master/progs.csv"
 [ -z ${dotfiles_repo+x} ] && dotfiles_repo="https://github.com/jonatascmedeiros/dotfiles.git"
 
+title_message()
+{
+    echo "*********************************************************"
+    echo "$1"
+    echo "*********************************************************"
+}
+
 fatal_error()
 {
-    dialog --msgbox "$1\n\nThe installation process cannot continue." --ok-label "Exit" 0 0
-    clear
+    title_message "$1\nThe installation process cannot continue."
     exit 1
+}
+
+confirm()
+{
+    read -r -p "${1:-Are you sure? [y/N]} " response
+    case "$response" in
+        [yY][eE][sS]|[yY]) 
+            true
+            ;;
+        *)
+            false
+            ;;
+    esac
 }
 
 new_perms()
@@ -25,40 +44,39 @@ new_perms()
 
 root_config()
 {
-    dialog --infobox "Configuring system..." 0 0
+    title_message "Starting JARBS"
 
-    # root password
+    echo "root password setting."
     root_pass=$(cat /tmp/.rpass)
     echo "root:${root_pass}" | chpasswd
     rm /tmp/.rpass
 
-    # time
-    ln -sf /usr/share/zoneinfo/${time_zone} /etc/localtime &>/dev/null
+    echo "Time zone setting."
+    ln -sf /usr/share/zoneinfo/${time_zone} /etc/localtime
     hwclock -wu
 
-    # locale
+    echo "Locale setting."
     sed -i 's/^#en_US/en_US/' /etc/locale.gen
-    locale-gen &>/dev/null
+    locale-gen
     echo "LANG=en_US.UTF-8" > /etc/locale.conf
 
-    # network
-    dialog --infobox "Installing NetworkManager..." 0 0
-    pacman --noconfirm --needed -S networkmanager &>/dev/null
-    systemctl enable NetworkManager &>/dev/null
+    echo "Network Manager installation."
+    pacman --noconfirm --needed -S networkmanager
+    systemctl enable NetworkManager
 
-    # bootloader
-    bootctl install &>/dev/null
+    echo "Bootloader installation"
+    bootctl install
     echo -e 'default\tarch\ntimeout\t3\neditor\t0' > /boot/loader/loader.conf
     echo -e 'title\tArch Linux\nlinux\t/vmlinuz-linux\ninitrd\t/intel-ucode.img\ninitrd\t/initramfs-linux.img\noptions\troot=PARTLABEL=arch rw' > /boot/loader/entries/arch.conf
 
-    # ssd settings
-    systemctl enable fstrim.timer &>/dev/null
+    echo "SSD settings."
+    systemctl enable fstrim.timer
     echo -e "ACTION==\"add|change\", KERNEL==\"sd[a-z]\", ATTR{queue/rotational}==\"0\", ATTR{queue/scheduler}=\"deadline\"" > /etc/udev/rules.d/60-schedulers.rules
 }
 
 swap_file()
 {
-    dialog --infobox "Creating swap file..." 0 0
+    title_message "Swap File Creation"
     fallocate -l 512M /swapfile
     chmod 600 /swapfile
     mkswap /swapfile
@@ -68,9 +86,9 @@ swap_file()
 
 user_config()
 {
-    dialog --infobox "Configuring new user..." 0 0
+    title_message "New User Configuration"
     user_name=$(cat /tmp/uname)
-    useradd -m -g wheel -s /bin/bash \"${user_name}\" &>/dev/null
+    useradd -m -g wheel -s /bin/bash "${user_name}"
     user_pass=$(cat /tmp/.upass)
     echo "${user_name}:${user_pass}" | chpasswd
     rm /tmp/.upass /tmp/uname
@@ -79,53 +97,54 @@ user_config()
 
 refresh_keys()
 {
-    dialog --infobox "Refreshing pacman keys..." 0 0
-    pacman-key --init &>/dev/null
-    pacman-key --populate archlinux &>/dev/null
-    pacman-key --refresh-keys &>/dev/null
+    title_message "Refreshing Pacman Keys"
+    pacman-key --init
+    pacman-key --populate archlinux
+    pacman-key --refresh-keys
 }
 
 install_aur_helper()
 {
     [[ -f /usr/bin/${aurhelper} ]] || (
-    dialog --infobox "Installing \"${aurhelper}\", an AUR helper..." 0 0
+    title_message "${aurhelper} Installation"
 
     cd /tmp
     rm -rf /tmp/"${aurhelper}"*
 
-    curl -sO https://aur.archlinux.org/cgit/aur.git/snapshot/"${aurhelper}".tar.gz && sudo -u "${user_name}" tar -xvf "${aurhelper}".tar.gz &>/dev/null && cd "${aurhelper}" && sudo -u "${user_name}" makepkg --noconfirm -si &>/dev/null
+    curl -O https://aur.archlinux.org/cgit/aur.git/snapshot/"${aurhelper}".tar.gz && sudo -u "${user_name}" tar -xvf "${aurhelper}".tar.gz && cd "${aurhelper}" && sudo -u "${user_name}" makepkg --noconfirm -si
 
     cd /tmp) ;
 }
 
 git_make_install()
 {
+    echo "Installing \`$(basename $1)\` ($n_prog of $total_progs) via \`git\` and \`make\`. $(basename $1) $2."
     dir=$(mktemp -d)
-    dialog --infobox "Installing \`$(basename $1)\` ($n_prog of $total_progs) via \`git\` and \`make\`. $(basename $1) $2." 5 70
-    git clone --depth 1 "$1" "$dir" &>/dev/null
+    git clone --depth 1 "$1" "$dir"
     cd "$dir" || fatal_error "git failed." 
-    make &>/dev/null
-    make install &>/dev/null
+    make
+    make install
     cd /tmp ;
 }
 
 pac_install()
 {
-    dialog --infobox "Installing \`$1\` ($n_prog of $total_progs). $1 $2." 5 70
-    pacman --noconfirm --needed -S "$1" &>/dev/null
+    echo "Installing \`$1\` ($n_prog of $total_progs). $1 $2."
+    pacman --noconfirm --needed -S "$1"
 }
 
 aur_install()
 {
-    dialog --infobox "Installing \`$1\` ($n_prog of $total_progs) from the AUR. $1 $2." 5 70
+    echo "Installing \`$1\` ($n_prog of $total_progs) from the AUR. $1 $2."
     grep "^$1$" <<< "$aur_installed" && return
-    sudo -u $user_name $aurhelper -S --noconfirm "$1" &>/dev/null
+    sudo -u ${user_name} ${aurhelper} -S --noconfirm "$1"
 }
 
 install_progs()
 {
-    dialog --infobox "Preparing to install programs..." 4 60
-    ([ -f "$progs_file" ] && cp "$progs_file" /tmp/progs.csv) || curl -Ls "$progs_file" > /tmp/progs.csv
+    title_message "Programs Installation"
+    echo "Program list download."
+    ([ -f "$progs_file" ] && cp "$progs_file" /tmp/progs.csv) || curl -L "$progs_file" > /tmp/progs.csv
     total_progs=$(wc -l < /tmp/progs.csv)
     aur_installed=$(pacman -Qm | awk '{print $1}')
     while IFS=, read -r tag program comment; do
@@ -140,38 +159,41 @@ install_progs()
 
 get_git_repo()
 {
-    dialog --infobox "Downloading and installing config files..." 4 60
+    title_message "Download and Installation of $(basename $1)."
     dir=$(mktemp -d)
     chown -R "${user_name}":wheel "$dir"
-    sudo -u "${user_name}" git clone --depth 1 "$1" "$dir"/git_repo &>/dev/null && sudo -u "${user_name}" mkdir -p "$2" && sudo -u "${user_name}" cp -rT "$dir"/git_repo "$2"
+    sudo -u "${user_name}" git clone --depth 1 "$1" "$dir"/git_repo && sudo -u "${user_name}" mkdir -p "$2" && sudo -u "${user_name}" cp -rT "$dir"/git_repo "$2"
 }
 
 service_init()
 {
+    title_message "Enabling Services"
     for service in "$@"; do
-        dialog --infobox "Enabling \"${service}\"..." 4 40
+        echo "Enabling \"${service}\"."
         systemctl enable "${service}"
     done ;
 }
 
-systembeep_off()
+system_beep_off()
 {
-    dialog --infobox "Getting rid of error beep sound..." 10 50
+    echo "Getting rid of error beep sound."
 	rmmod pcspkr
 	echo "blacklist pcspkr" > /etc/modprobe.d/nobeep.conf ;
 }
 
 final_configs()
 {
+    title_message "Finishing Things Off"
+
     new_perms "%wheel ALL=(ALL) ALL\\n%wheel ALL=(ALL) NOPASSWD: /usr/bin/shutdown,/usr/bin/reboot,/usr/bin/systemctl suspend,/usr/bin/wifi-menu,/usr/bin/mount,/usr/bin/umount,/usr/bin/pacman -Syu,/usr/bin/pacman -Syyu,/usr/bin/packer -Syu,/usr/bin/packer -Syyu,/usr/bin/systemctl restart NetworkManager,/usr/bin/rc-service NetworkManager restart,/usr/bin/pacman -Syyu --noconfirm,/usr/bin/loadkeys,/usr/bin/yay"
 
     sed -i "s/^#Color/Color/g" /etc/pacman.conf
-    systembeep_off
+    system_beep_off
 }
 
 final_message()
 {
-    dialog --msgbox "The installation process is finished.\n\nReboot the computer." --ok-label "Reboot" 0 0
+    title_message "The installation process is finished."
 }
 
 root_config
