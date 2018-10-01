@@ -78,7 +78,7 @@ ask_user()
 
 confirm_install()
 {
-    title_message "The installation is ready to start.\n\nFrom this point onwards the script will install everything automatically, without asking you anything or giving any warnings.\n\nBe aware that the script will DELETE your entire disk. The disk that will be erased is the one in /dev/sda. If you have multiple drives and that one is not the right one, DO NOT continue the installation." 0 0 || fatal_error "Process aborted."
+    title_message "The installation is ready to start.\n\nFrom this point onwards the script will install\neverything automatically, without asking you\nanything or giving any warnings.\n\nBe aware that the script will DELETE your entire disk.\nThe disk that will be erased is the one\nin /dev/sda. If you have multiple drives and that one\nis not the right one, DO NOT continue\nthe installation." || fatal_error "Process aborted."
 
     confirm "Do you want to start the installation process? [y/N] " || fatal_error "Process aborted."
 }
