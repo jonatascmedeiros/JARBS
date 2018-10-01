@@ -47,9 +47,9 @@ root_config()
     title_message "Starting JARBS"
 
     echo "root password setting."
-    root_pass=$(cat /tmp/.rpass)
+    root_pass=$(cat .rpass)
     echo "root:${root_pass}" | chpasswd
-    rm /tmp/.rpass
+    rm .rpass
 
     echo "Time zone setting."
     ln -sf /usr/share/zoneinfo/${time_zone} /etc/localtime
@@ -87,11 +87,11 @@ swap_file()
 user_config()
 {
     title_message "New User Configuration"
-    user_name=$(cat /tmp/uname)
+    user_name=$(cat .uname)
     useradd -m -g wheel -s /bin/bash "${user_name}"
-    user_pass=$(cat /tmp/.upass)
+    user_pass=$(cat .upass)
     echo "${user_name}:${user_pass}" | chpasswd
-    rm /tmp/.upass /tmp/uname
+    rm .upass .uname
     new_perms "%wheel ALL=(ALL) NOPASSWD: ALL"
 }
 

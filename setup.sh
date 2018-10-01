@@ -125,9 +125,9 @@ go_chroot()
 {
     echo "Temp files migration."
     echo "${host_name}" > /mnt/etc/hostname
-    echo "${user_name}" > /mnt/tmp/.uname
-    echo "${root_pass1}" > /mnt/tmp/.rpass
-    echo "${user_pass1}" > /mnt/tmp/.upass
+    echo "${user_name}" > /mnt/.uname
+    echo "${root_pass1}" > /mnt/.rpass
+    echo "${user_pass1}" > /mnt/.upass
     unset root_pass1
     unset user_pass1
 
