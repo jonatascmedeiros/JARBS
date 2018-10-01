@@ -45,12 +45,13 @@ new_perms()
 root_config()
 {
     title_message "Starting JARBS"
+    sleep 2
 
     title_message "root Password Setting"
     root_pass=$(cat .rpass)
     echo "root:${root_pass}" | chpasswd
     rm .rpass
-    sleep 1
+    sleep 2
 
     title_message "Time Zone Setting"
     ln -sf /usr/share/zoneinfo/${time_zone} /etc/localtime
@@ -61,24 +62,25 @@ root_config()
     sed -i 's/^#en_US/en_US/' /etc/locale.gen
     locale-gen
     echo "LANG=en_US.UTF-8" > /etc/locale.conf
-    sleep 2
+    sleep 3
 
     title_message "Network Manager Installation"
+    sleep 2
     pacman --noconfirm --needed -S networkmanager
     title_message "Enabling Network Manager"
     systemctl enable NetworkManager
-    sleep 2
+    sleep 3
 
     title_message "Bootloader Installation"
     bootctl install
     echo -e 'default\tarch\ntimeout\t3\neditor\t0' > /boot/loader/loader.conf
     echo -e 'title\tArch Linux\nlinux\t/vmlinuz-linux\ninitrd\t/intel-ucode.img\ninitrd\t/initramfs-linux.img\noptions\troot=PARTLABEL=arch rw' > /boot/loader/entries/arch.conf
-    sleep 2
+    sleep 3
 
     title_message "SSD Settings"
     systemctl enable fstrim.timer
     echo -e "ACTION==\"add|change\", KERNEL==\"sd[a-z]\", ATTR{queue/rotational}==\"0\", ATTR{queue/scheduler}=\"deadline\"" > /etc/udev/rules.d/60-schedulers.rules
-    sleep 2
+    sleep 3
 }
 
 swap_file()
@@ -89,7 +91,7 @@ swap_file()
     mkswap /swapfile
     swapon /swapfile
     echo -e "# Swap File\n/swapfile\tnone\tswap\tdefaults\t0 0\n" >> /etc/fstab
-    sleep 2
+    sleep 3
 }
 
 user_config()
@@ -101,13 +103,13 @@ user_config()
     echo "${user_name}:${user_pass}" | chpasswd
     rm .upass .uname
     new_perms "%wheel ALL=(ALL) NOPASSWD: ALL"
-    sleep 2
+    sleep 3
 }
 
 refresh_keys()
 {
     title_message "Initializing Pacman Keys"
-    sleep 1
+    sleep 2
     pacman-key --init
     title_message "Populating Pacman Keys"
     sleep 2
@@ -195,6 +197,7 @@ system_beep_off()
     title_message "Getting rid of error beep sound"
 	rmmod pcspkr
 	echo "blacklist pcspkr" > /etc/modprobe.d/nobeep.conf ;
+    sleep 2
 }
 
 final_configs()
@@ -211,7 +214,7 @@ final_configs()
 final_message()
 {
     title_message "The installation process is finished."
-    sleep 1
+    sleep 3
 }
 
 root_config

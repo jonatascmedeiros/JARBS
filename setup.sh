@@ -6,9 +6,9 @@
 
 title_message()
 {
-    echo -e "\n*********************************************************"
+    echo -e "\n************************************************************"
     echo -e "$1"
-    echo "---------------------------------------------------------"
+    echo "------------------------------------------------------------"
 }
 
 fatal_error()
@@ -32,7 +32,7 @@ confirm()
 
 greetings()
 {
-    title_message "JARBS - Jonatas' Auto-Rice Bootstrapping Script.\n\nThis script will automatically install a full arch linux\nsystem with i3-gaps as a window manager.\n\nThe system comes pre-configured with a focus on a\nterminal based workflow."
+    title_message "JARBS - Jonatas\' Auto-Rice Bootstrapping Script.\n\nThis script will automatically install a full arch linux\nsystem with i3-gaps as a window manager.\n\nThe system comes pre-configured with a focus on a terminal\nbased workflow."
 }
 
 check_requirements()
@@ -80,7 +80,7 @@ ask_user()
 
 confirm_install()
 {
-    title_message "The installation is ready to start.\n\nFrom this point onwards the script will install\neverything automatically, without asking you anything\nor giving any warnings.\n\nBe aware that the script will DELETE your entire disk.\nThe disk that will be erased is the one in /dev/sda.\nIf you have multiple drives and that one is\nnot the right one, DO NOT continue the installation." || fatal_error "Process aborted."
+    title_message "The installation is ready to start.\n\nFrom this point onwards the script will install everything\nautomatically, without asking you anything or giving any\nwarnings.\n\nBe aware that the script will DELETE your entire disk. The\ndisk that will be erased is the one in /dev/sda. If you have\nmultiple drives and that one is not the right one, DO NOT\ncontinue the installation." || fatal_error "Process aborted."
 
     confirm "Do you want to start the installation process? [y/N] " || fatal_error "Process aborted."
 }
@@ -89,37 +89,40 @@ pre_install()
 {
     title_message "Clock synchronization"
     timedatectl set-ntp true
+    sleep 2
 
     title_message "Disk partitioning"
     parted -s /dev/sda mklabel gpt
-    echo
     parted -s /dev/sda mkpart esp fat32 0% 129MiB set 1 boot on name 1 ESP
-    echo
     parted -s /dev/sda mkpart arch ext4 129MiB 32897MiB name 2 arch
-    echo
     parted -s /dev/sda mkpart home ext4 32897MiB 100% name 3 home
-    sleep 2
+    sleep 3
 
     title_message "Filesystems creation"
     mkfs.vfat -F32 -n ESP /dev/disk/by-partlabel/ESP
     echo
+    sleep 2
     mkfs.ext4 -F -m 0 -T big -L arch /dev/disk/by-partlabel/arch
     echo
-    mkfs.ext4 -F -m 0 -T big -L home /dev/disk/by-partlabel/home
     sleep 2
+    mkfs.ext4 -F -m 0 -T big -L home /dev/disk/by-partlabel/home
+    sleep 3
 
     title_message "Partition mounting"
     mount PARTLABEL=arch /mnt
     mkdir -p /mnt/{boot,home}
     mount PARTLABEL=ESP /mnt/boot
     mount PARTLABEL=home /mnt/home
+    sleep 2
 
     title_message "Mirrolist Update"
     cp /etc/pacman.d/mirrorlist /etc/pacman.d/mirrorlist.backup
     curl "https://www.archlinux.org/mirrorlist/?country=BR&use_mirror_status=on" | sed -e 's/^#Server/Server/' -e '/^#/d' > /etc/pacman.d/mirrorlist
+    sleep 2
+    echo
     echo "Mirrorlist:"
     cat /etc/pacman.d/mirrorlist
-    sleep 3
+    sleep 4
 }
 
 base_install()
@@ -131,6 +134,7 @@ base_install()
 
     title_message "fstab Generation"
     genfstab -t PARTUUID -p /mnt > /mnt/etc/fstab
+    sleep 2
 }
 
 go_chroot()
@@ -142,8 +146,10 @@ go_chroot()
     echo "${user_pass1}" > /mnt/.upass
     unset root_pass1
     unset user_pass1
+    sleep 2
 
     title_message "Downloading and Starting JARBS"
+    sleep 2
     curl https://raw.githubusercontent.com/jonatascmedeiros/JARBS/master/jarbs.sh > /mnt/jarbs.sh && arch-chroot /mnt bash jarbs.sh && rm /mnt/jarbs.sh
 }
 
@@ -151,8 +157,9 @@ reboot_computer()
 {
     title_message "Partitions Unmounting"
     umount -R /mnt
-    title_message "Rebooting"
     sleep 2
+    title_message "Rebooting"
+    sleep 3
     reboot
 }
 
