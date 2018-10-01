@@ -8,7 +8,7 @@ title_message()
 {
     echo -e "\n*********************************************************"
     echo -e "$1"
-    echo "*********************************************************"
+    echo "---------------------------------------------------------"
 }
 
 fatal_error()
@@ -56,22 +56,22 @@ ask_user()
 
     read -p "Enter a name for the computer: " host_name
 
-    read -sp "Enter root password: " root_pass1
-    read -sp "Retype root password: " root_pass2
+    read -sp "Enter root password: " root_pass1 && echo
+    read -sp "Retype root password: " root_pass2 && echo
     while ! [[ -n ${root_pass1} && ${root_pass1} == ${root_pass2} ]]; do
         echo "Passwords do not match. Try again."
-        read -sp "Enter root password: " root_pass1
-        read -sp "Retype root password: " root_pass2
+        read -sp "Enter root password: " root_pass1 && echo
+        read -sp "Retype root password: " root_pass2 && echo
     done
     unset root_pass2
 
     read -p "Enter name of new user: " user_name
-    read -sp "Enter password for ${user_name}: " user_pass1
-    read -sp "Retype password for ${user_name}: " user_pass2
+    read -sp "Enter password for ${user_name}: " user_pass1 && echo
+    read -sp "Retype password for ${user_name}: " user_pass2 && echo
     while ! [[ -n ${user_pass1} && ${user_pass1} == ${user_pass2} ]]; do
         echo "Passwords do not match. Try again."
-        read -sp "Enter password for ${user_name}: " user_pass1
-        read -sp "Retype password for ${user_name}: " user_pass2
+        read -sp "Enter password for ${user_name}: " user_pass1 && echo
+        read -sp "Retype password for ${user_name}: " user_pass2 && echo
     done
     unset user_pass2
 }
